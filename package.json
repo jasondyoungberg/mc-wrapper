@@ -1,0 +1,22 @@
+{
+  "name": "mc-wrapper",
+  "version": "1.0.0",
+  "description": "Minecraft Bedrock Server Wrapper",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasondyoungberg/mc-wrapper.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasondyoungberg/mc-wrapper/issues"
+  },
+  "homepage": "https://github.com/jasondyoungberg/mc-wrapper#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

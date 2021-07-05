@@ -1,0 +1,29 @@
+{
+	"mc-version":"1.17.2.01",
+	"linesSent":100,
+	"linesStored":10000,
+	"port":3000,
+
+	"backups":[
+		{"trigger":"manual",
+			"path":"./backup/manual/",
+			"max":-1
+		},
+		{"trigger":"auto-day",
+			"path":"./backup/auto-day/",
+			"max":-1
+		},
+		{"trigger":"auto-hour",
+			"path":"./backup/auto-hour/",
+			"max":72
+		},
+		{"trigger":"stop",
+			"path":"./backup/stop/",
+			"max":10
+		},
+		{"trigger":"crash",
+			"path":"./backup/crash/",
+			"max":-1
+		}
+	]
+}
