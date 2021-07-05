@@ -1,7 +1,7 @@
 process.chdir(__dirname);
-const { spawn } = require('child_process');
-const express = require('express');
-const config = require('./config.json');
+const { spawn } = require("child_process");
+const express = require("express");
+const config = require("./config.json");
 
 // --- Server --- //
 var mc;
@@ -12,10 +12,10 @@ var stderrBuffer = "";
 var idCounter = 0;
 
 function start(){
-	mc = spawn('./mc/bedrock_server.exe');
+	mc = spawn("./mc/bedrock_server.exe");
 	running = true;
 
-	mc.stdout.on('data', (data) => {
+	mc.stdout.on("data", (data) => {
 		stdoutBuffer += data;
 		
 		var parts = stdoutBuffer.split("\r\n")
@@ -43,7 +43,7 @@ function start(){
 		});
 	});
 	
-	mc.stderr.on('data', (data) => {
+	mc.stderr.on("data", (data) => {
 		stderrBuffer += data;
 		
 		var parts = stderrBuffer.split("\r\n")
@@ -71,7 +71,7 @@ function start(){
 		});
 	});
 
-	mc.on('close', (code) => {
+	mc.on("close", (code) => {
 		running = false;
 		output.unshift({
 			type:"close",
@@ -86,7 +86,7 @@ start();
 // --- API --- //
 const app = express();
 
-app.get('/read', (req, res) => {
+app.get("/read", (req, res) => {
 	var qFrom = req.query.from;
 	var qLines = req.query.lines;
 	
@@ -104,24 +104,24 @@ app.get('/read', (req, res) => {
 	}
 });
 
-app.get('/run', (req, res) => {
+app.get("/run", (req, res) => {
 	mc.stdin.write(req.query.cmd+"\r\n");
 	res.sendStatus(200);
 });
 
-app.get('/run', (req, res) => {
+app.get("/run", (req, res) => {
 	mc.stdin.write(req.query.cmd+"\r\n");
 	res.sendStatus(200);
 });
 
-app.get('/start', (req, res) => {
+app.get("/start", (req, res) => {
 	if (running) return res.sendStatus(405);
 
 	start();
 	res.sendStatus(200);
 });
 
-app.get('/stop', (req, res) => {
+app.get("/stop", (req, res) => {
 	if (!running) return res.sendStatus(405);
 
 	mc.stdin.write("stop\r\n");
