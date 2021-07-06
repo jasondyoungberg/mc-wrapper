@@ -109,6 +109,12 @@ app.get("/run", (req, res) => {
 	res.sendStatus(200);
 });
 
+app.get("/status", (req, res) => {
+	res.json({
+		running:running
+	});
+});
+
 app.get("/start", (req, res) => {
 	if (running) return res.sendStatus(405);
 

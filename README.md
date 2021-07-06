@@ -1,6 +1,7 @@
 # mc-wrapper
 
 ## allowed requests
+`/status`
 `/start`
 `/stop`
 `/read`
