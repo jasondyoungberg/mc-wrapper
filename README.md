@@ -9,9 +9,9 @@
 `/read?from=<int>`
 `/run?cmd=<string>`
 
-`/backup` (TODO)
+`/backup`
 `/backup_list` (TODO)
-`/restore?id=<int>` (TODO)
+`/restore?type=<id>&id=<int>` (TODO)
 
 `/update` (TODO)
 `/update?v=<string>` (TODO)

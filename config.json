@@ -1,13 +1,18 @@
 {
-	"mc-version":"1.17.2.01",
+	"mcVersion":"1.17.2.01",
 	"linesSent":100,
 	"linesStored":10000,
 	"port":3000,
+	"levelName":"Bedrock level",
 
 	"backups":[
 		{"trigger":"manual",
 			"path":"./backup/manual/",
 			"max":-1
+		},
+		{"trigger":"manual",
+			"path":"./backup/manual2/",
+			"max":10
 		},
 		{"trigger":"auto-day",
 			"path":"./backup/auto-day/",

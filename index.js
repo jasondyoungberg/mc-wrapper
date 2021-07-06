@@ -1,11 +1,15 @@
 process.chdir(__dirname);
 const { spawn } = require("child_process");
 const express = require("express");
+const { listeners } = require("process");
+const backup = require("./backup");
 const config = require("./config.json");
 
 // --- Server --- //
 var mc;
 var running = false;
+var backingUp = false;
+var backupData = null;
 var output = [];
 var stdoutBuffer = "";
 var stderrBuffer = "";
@@ -31,6 +35,17 @@ function start(){
 			meta = line.match(/\[(.+)\]/);
 			meta = meta ? meta[1] : "";
 
+			if (backingUp && output[0]?.content == "Data saved. Files are now ready to be copied.") {
+				backupData = content.split(", ").map(ele=>{
+					var x = ele.split(":");
+
+					return {
+						path:x[0].replace(config.levelName,""),
+						size:parseInt(x[1],10)
+					}
+				});
+			}
+
 			output.unshift({
 				type:"mc",
 				id:idCounter++,
@@ -38,6 +53,10 @@ function start(){
 				meta:meta,
 				content:content,
 			});
+
+			if (backupData == "waiting") {
+				backingData = ""
+			}
 
 			if (output.length > config.linesStored) output.pop();
 		});
@@ -83,6 +102,30 @@ function start(){
 
 start();
 
+function backupLive(){
+	if (backingUp) return;
+
+	backingUp = true;
+	backupData = null;
+	mc.stdin.write("save hold\r\n");
+
+	return new Promise((resolve,reject)=>{
+		var loop = setInterval(()=>{
+			if (backupData) {
+				clearInterval(loop);
+				backup.backup("manual",backupData)
+					.then(resolve)
+					.finally(()=>{
+						backingUp = false;
+						mc.stdin.write("save resume\r\n");
+					})
+			} else {
+				mc.stdin.write("save query\r\n");
+			}
+		},100);
+	});
+}
+
 // --- API --- //
 const app = express();
 
@@ -111,7 +154,8 @@ app.get("/run", (req, res) => {
 
 app.get("/status", (req, res) => {
 	res.json({
-		running:running
+		running:running,
+		backingUp:backingUp
 	});
 });
 
@@ -126,6 +170,12 @@ app.get("/stop", (req, res) => {
 	if (!running) return res.sendStatus(405);
 
 	mc.stdin.write("stop\r\n");
+	res.sendStatus(200);
+});
+
+app.get("/backup", (req, res) => {
+	if (backingUp || !running) return res.sendStatus(405);
+	backupLive();
 	res.sendStatus(200);
 });
 
