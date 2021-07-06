@@ -47,7 +47,7 @@ function start(){
 			}
 
 			output.unshift({
-				type:"mc",
+				type:"stdout",
 				id:idCounter++,
 				raw:line,
 				meta:meta,
@@ -79,7 +79,7 @@ function start(){
 			meta = meta ? meta[1] : "";
 
 			output.unshift({
-				type:"mc",
+				type:"stderr",
 				id:idCounter++,
 				raw:line,
 				meta:meta,
