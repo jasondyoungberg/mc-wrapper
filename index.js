@@ -109,11 +109,6 @@ app.get("/run", (req, res) => {
 	res.sendStatus(200);
 });
 
-app.get("/run", (req, res) => {
-	mc.stdin.write(req.query.cmd+"\r\n");
-	res.sendStatus(200);
-});
-
 app.get("/start", (req, res) => {
 	if (running) return res.sendStatus(405);
 
