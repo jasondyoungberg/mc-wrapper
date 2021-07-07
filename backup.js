@@ -46,8 +46,10 @@ module.exports = {
 	},
 	prune:()=>{
 		config.backups.forEach(ele => {
+			if (ele.max == -1) return;
 			fs.readdir(ele.path,(err,files)=>{
 				if (err) return console.error(err);
+				if (ele.max <= files.length) return;
 
 				var min = Infinity;
 				files.forEach(filename=>{

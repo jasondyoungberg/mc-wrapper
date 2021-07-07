@@ -64,9 +64,9 @@
 			var newUrl = url;
 			if (auth) {
 				if (url.includes("?")) {
-					newUrl += `&auth=${auth}`;
+					newUrl += `&auth=${encodeURIComponent(auth)}`;
 				} else {
-					newUrl += `?auth=${auth}`;
+					newUrl += `?auth=${encodeURIComponent(auth)}`;
 				}
 			}
 
