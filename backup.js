@@ -17,8 +17,6 @@ config.backups.map(ele => {
 	return newEle;
 });
 
-console.log(config.backups);
-
 module.exports = {
 	backup:(type,data)=>{
 		return new Promise((resolve,reject) => {
@@ -28,19 +26,38 @@ module.exports = {
 					waiting++;
 					var id = ele.id++;
 					fs.copy(`./mc/worlds/${config.levelName}`,ele.path + id, err => {
-						data.forEach(file=>{
-							waiting ++;
-							fs.truncate(ele.path + id + file.path, file.length, err=>{
-								if(err) console.error(err);
-								waiting --;
-								if (waiting <= 0) resolve();
+						if (data) {
+							data.forEach(file=>{
+								waiting ++;
+								fs.truncate(ele.path + id + file.path, file.length, err=>{
+									if(err) console.error(err);
+									waiting --;
+									if (waiting <= 0) resolve();
+								});
 							});
-						});
+						}
 						if (err) return console.error(err);
 						waiting--;
 						if (waiting <= 0) resolve();
 					} )
 				}
+			});
+		});
+	},
+	prune:()=>{
+		config.backups.forEach(ele => {
+			fs.readdir(ele.path,(err,files)=>{
+				if (err) return console.error(err);
+
+				var min = Infinity;
+				files.forEach(filename=>{
+					var val = parseInt(filename,10);
+					if (val < min) min = val;
+				});
+
+				fs.remove(ele.path+min,err=>{
+					if (err) console.error(err);
+				});
 			});
 		});
 	}

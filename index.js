@@ -1,9 +1,9 @@
 process.chdir(__dirname);
 const { spawn } = require("child_process");
 const express = require("express");
-const { listeners } = require("process");
 const backup = require("./backup");
 const config = require("./config.json");
+const cron = require("node-cron");
 
 // --- Server --- //
 var mc;
@@ -97,12 +97,18 @@ function start(){
 			id:idCounter++,
 			code:code
 		});
+
+		backingUp = true;
+		backup.backup("stop").finally(()=>{
+			backingUp = false;
+			backup.prune();
+		});
 	});
 };
 
 start();
 
-function backupLive(){
+function backupLive(type){
 	if (backingUp) return;
 
 	backingUp = true;
@@ -113,11 +119,12 @@ function backupLive(){
 		var loop = setInterval(()=>{
 			if (backupData) {
 				clearInterval(loop);
-				backup.backup("manual",backupData)
+				backup.backup(type,backupData)
 					.then(resolve)
 					.finally(()=>{
 						backingUp = false;
 						mc.stdin.write("save resume\r\n");
+						backup.prune();
 					})
 			} else {
 				mc.stdin.write("save query\r\n");
@@ -179,8 +186,52 @@ app.get("/stop", (req, res) => {
 
 app.get("/backup", (req, res) => {
 	if (backingUp || !running) return res.sendStatus(405);
-	backupLive();
+	backupLive("manual");
 	res.sendStatus(200);
 });
 
 app.listen(config.port,()=>{console.log(`API started`)});
+
+config.backups.forEach(ele => {
+	switch (ele.trigger) {
+		case "auto-5m":
+			cron.schedule("*/5 * * * *",()=>{backupLive("auto-5m")});
+			break;
+		case "auto-10m":
+			cron.schedule("*/10 * * * *",()=>{backupLive("auto-10m")});
+			break;
+		case "auto-15m":
+			cron.schedule("*/15 * * * *",()=>{backupLive("auto-15m")});
+			break;
+		case "auto-20m":
+			cron.schedule("*/20 * * * *",()=>{backupLive("auto-20m")});
+			break;
+		case "auto-30m":
+			cron.schedule("*/30 * * * *",()=>{backupLive("auto-30m")});
+			break;
+		case "auto-1h":
+			cron.schedule("0 * * * *",()=>{backupLive("auto-1h")});
+			break;
+		case "auto-2h":
+			cron.schedule("0 */2 * * *",()=>{backupLive("auto-2h")});
+			break;
+		case "auto-3h":
+			cron.schedule("0 */3 * * *",()=>{backupLive("auto-3h")});
+			break;
+		case "auto-4h":
+			cron.schedule("0 */4 * * *",()=>{backupLive("auto-4h")});
+			break;
+		case "auto-6h":
+			cron.schedule("0 */6 * * *",()=>{backupLive("auto-6h")});
+			break;
+		case "auto-8h":
+			cron.schedule("0 */8 * * *",()=>{backupLive("auto-8h")});
+			break;
+		case "auto-12h":
+			cron.schedule("0 */12 * * *",()=>{backupLive("auto-12h")});
+			break;
+		case "auto-day":
+			cron.schedule("0 0 * * *",()=>{backupLive("auto-day")});
+			break;
+	}
+})
