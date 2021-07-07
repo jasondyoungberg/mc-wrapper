@@ -12,6 +12,7 @@ var running = false;
 var backingUp = false;
 var quitting = false;
 var crashed = false;
+var manualStop = false;
 var backupData = null;
 var output = [];
 var stdoutBuffer = "";
@@ -109,7 +110,8 @@ function start(){
 			backup.prune();
 
 			if (quitting) process.exit()
-			if (config.autoRestart) start();
+			if (config.autoRestart && !manualStop) start();
+			manualStop = false;
 		});
 	});
 };
@@ -210,6 +212,7 @@ app.get("/start", (req, res) => {
 app.get("/stop", (req, res) => {
 	if (!running) return res.sendStatus(405);
 
+	manualStop = true;
 	send("stop");
 	res.sendStatus(200);
 });
