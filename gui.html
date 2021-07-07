@@ -49,7 +49,6 @@
 		var input = document.getElementById("input");
 
 		function get(url,callback=()=>{}){
-			//console.log(url)
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.onreadystatechange = function() { 
 				if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
@@ -62,7 +61,6 @@
 		var lastRead = 0;
 		function render(msg){
 			var data = JSON.parse(msg);
-			console.log(data);
 			var atBottom = 1 == output.scrollTop / (output.scrollHeight - output.clientHeight) ||
 				output.scrollHeight == output.clientHeight;
 
