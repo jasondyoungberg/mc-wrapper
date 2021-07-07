@@ -215,8 +215,14 @@ app.get("/stop", (req, res) => {
 });
 
 app.get("/backup", (req, res) => {
-	if (backingUp || !running) return res.sendStatus(405);
-	backupLive("manual");
+	if (backingUp) return res.sendStatus(405);
+	if (running) backupLive("manual");
+	else {
+		backingUp = true;
+		backup.backup("manual").finally((()=>{
+			backingUp = false;
+		}));
+	}
 	res.sendStatus(200);
 });
 
