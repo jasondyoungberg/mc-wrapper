@@ -15,11 +15,11 @@
 			"max":10
 		},
 		{"trigger":"auto-day",
-			"path":"./backup/auto-day/",
+			"path":"./backup/daily/",
 			"max":-1
 		},
-		{"trigger":"auto-hour",
-			"path":"./backup/auto-hour/",
+		{"trigger":"auto-1h",
+			"path":"./backup/hourly/",
 			"max":72
 		},
 		{"trigger":"stop",
