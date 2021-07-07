@@ -129,6 +129,10 @@ function backupLive(){
 // --- API --- //
 const app = express();
 
+app.get("/", (req, res) => {
+	res.sendFile(`${__dirname}/gui.html`);
+});
+
 app.get("/read", (req, res) => {
 	var qFrom = req.query.from;
 	var qLines = req.query.lines;

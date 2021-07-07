@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<style>
+		body {
+			display: grid;
+
+			grid-template-areas: "controls output" "controls input";
+			grid-template-columns: 250px 1fr;
+			grid-template-rows: 1fr 21px;
+			
+			margin: 0;
+			height: calc(100vh - 20px);
+
+			padding: 10px;
+
+			overflow: hidden;
+		}
+
+		#output {
+			grid-area: output;
+			overflow-y: scroll;
+			margin: 0;
+			padding-bottom: 2px;
+		}
+
+		#input {
+			grid-area: input;
+			border: 2px solid black;
+			outline: none;
+		}
+
+		#controls {
+			grid-area: controls;
+		}
+	</style>
+</head>
+<body>
+	<pre id="output"></pre>
+	<input id="input">
+	<div id="controls"></div>
+
+	<script>
+		var output = document.getElementById("output");
+		var input = document.getElementById("input");
+
+		function get(url,callback=()=>{}){
+			//console.log(url)
+			var xmlHttp = new XMLHttpRequest();
+			xmlHttp.onreadystatechange = function() { 
+				if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+					callback(xmlHttp.responseText);
+			}
+			xmlHttp.open("GET", url, true);
+			xmlHttp.send();
+		}
+
+		var lastRead = 0;
+		function render(msg){
+			var data = JSON.parse(msg);
+			var atBottom = 1 == output.scrollTop / (output.scrollHeight - output.clientHeight) ||
+				output.scrollHeight == output.clientHeight;
+
+			while (true) {
+				if (data.length == 0) break;
+				var line = data.pop();
+				output.append(`${line.raw}\n`);
+				lastRead = line.id;
+			}
+
+			if (atBottom) {
+				output.scrollHeight = output.scrollTop + output.clientHeight;
+				output.scrollTo(0,output.scrollHeight);
+			}
+		}
+		
+		get("/read?lines",render);
+
+		setInterval(()=>{
+			get(`/read?from=${lastRead}`,render)
+		},100);
+
+		input.addEventListener("keypress",ev=>{
+			if (ev.key == "Enter"){
+				get(`/run?cmd=${encodeURIComponent(input.value)}`);
+				input.value = "";
+			}
+		})
+	</script>
+</body>
+</html>
