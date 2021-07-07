@@ -25,6 +25,9 @@ module.exports = {
 				if (ele.trigger == type) {
 					waiting++;
 					var id = ele.id++;
+
+					console.log(`backing up to: '${ele.path}${id}'`)
+
 					fs.copy(`./mc/worlds/${config.levelName}`,ele.path + id, err => {
 						if (data) {
 							data.forEach(file=>{
