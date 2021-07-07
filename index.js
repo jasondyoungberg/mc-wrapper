@@ -9,6 +9,8 @@ const cron = require("node-cron");
 var mc;
 var running = false;
 var backingUp = false;
+var quitting = false;
+var crashed = false;
 var backupData = null;
 var output = [];
 var stdoutBuffer = "";
@@ -92,6 +94,8 @@ function start(){
 
 	mc.on("close", (code) => {
 		running = false;
+		crashed = code != 0;
+
 		output.unshift({
 			type:"close",
 			id:idCounter++,
@@ -99,9 +103,12 @@ function start(){
 		});
 
 		backingUp = true;
-		backup.backup("stop").finally(()=>{
+		backup.backup(crashed?"crash":"stop").finally(()=>{
 			backingUp = false;
 			backup.prune();
+
+			if (quitting) process.exit()
+			if (config.autoRestart) start();
 		});
 	});
 };
@@ -109,11 +116,12 @@ function start(){
 start();
 
 function backupLive(type){
+	if (!running) return;
 	if (backingUp) return;
 
 	backingUp = true;
 	backupData = null;
-	mc.stdin.write("save hold\r\n");
+	send("save hold");
 
 	return new Promise((resolve,reject)=>{
 		var loop = setInterval(()=>{
@@ -123,13 +131,24 @@ function backupLive(type){
 					.then(resolve)
 					.finally(()=>{
 						backingUp = false;
-						mc.stdin.write("save resume\r\n");
+						send("save resume");
 						backup.prune();
 					})
 			} else {
-				mc.stdin.write("save query\r\n");
+				send("save query");
 			}
 		},100);
+	});
+}
+
+function send(msg){
+	if (!running) return;
+	mc.stdin.write(msg+"\r\n");
+
+	output.unshift({
+		type:"stdin",
+		id:idCounter++,
+		raw:msg,
 	});
 }
 
@@ -159,7 +178,7 @@ app.get("/read", (req, res) => {
 });
 
 app.get("/run", (req, res) => {
-	mc.stdin.write(req.query.cmd+"\r\n");
+	send(req.query.cmd);
 	res.sendStatus(200);
 });
 
@@ -180,7 +199,7 @@ app.get("/start", (req, res) => {
 app.get("/stop", (req, res) => {
 	if (!running) return res.sendStatus(405);
 
-	mc.stdin.write("stop\r\n");
+	send("stop");
 	res.sendStatus(200);
 });
 
@@ -188,6 +207,16 @@ app.get("/backup", (req, res) => {
 	if (backingUp || !running) return res.sendStatus(405);
 	backupLive("manual");
 	res.sendStatus(200);
+});
+
+app.get("/quit", (req, res) => {
+	res.sendStatus(200);
+	if (running) {
+		quitting = true;
+		send("stop");
+	} else {
+		process.exit();
+	} 
 });
 
 app.listen(config.port,()=>{console.log(`API started`)});

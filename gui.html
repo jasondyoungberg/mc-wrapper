@@ -62,13 +62,14 @@
 		var lastRead = 0;
 		function render(msg){
 			var data = JSON.parse(msg);
+			console.log(data);
 			var atBottom = 1 == output.scrollTop / (output.scrollHeight - output.clientHeight) ||
 				output.scrollHeight == output.clientHeight;
 
 			while (true) {
 				if (data.length == 0) break;
 				var line = data.pop();
-				output.append(`${line.raw}\n`);
+				if (line.raw) output.append(`${line.raw}\n`);
 				lastRead = line.id;
 			}
 

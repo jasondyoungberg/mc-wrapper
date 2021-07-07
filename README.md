@@ -17,6 +17,9 @@ Starts the mc server
 ### **`stop`**
 Stops the mc server
 
+### **`quit`**
+Closes the server
+
 ### **`read`**
 Reads from output
 #### **args**
