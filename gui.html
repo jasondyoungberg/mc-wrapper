@@ -45,18 +45,35 @@
 	<div id="controls"></div>
 
 	<script>
+		var auth = window.localStorage.getItem("auth");
 		var output = document.getElementById("output");
 		var input = document.getElementById("input");
 
 		function get(url,callback=()=>{}){
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.onreadystatechange = function() { 
-				if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+				if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
 					callback(xmlHttp.responseText);
+				} else if (xmlHttp.readyState == 4 && (xmlHttp.status == 401 || xmlHttp.status == 403)) {
+					auth = prompt("password?");
+					window.localStorage.setItem("auth",auth);
+					get(url,callback);
+				}
 			}
-			xmlHttp.open("GET", url, true);
+
+			var newUrl = url;
+			if (auth) {
+				if (url.includes("?")) {
+					newUrl += `&auth=${auth}`;
+				} else {
+					newUrl += `?auth=${auth}`;
+				}
+			}
+
+			xmlHttp.open("GET", newUrl, true);
 			xmlHttp.send();
 		}
+		
 
 		var lastRead = 0;
 		function render(msg){
@@ -77,18 +94,20 @@
 			}
 		}
 		
-		get("/read?lines",render);
+		get("/read",msg=>{
+			render(msg);
+			setInterval(()=>{
+				get(`/read?from=${lastRead}`,render)
+			},100);
 
-		setInterval(()=>{
-			get(`/read?from=${lastRead}`,render)
-		},100);
+			input.addEventListener("keypress",ev=>{
+				if (ev.key == "Enter"){
+					get(`/run?cmd=${encodeURIComponent(input.value)}`);
+					input.value = "";
+				}
+			});
+		});
 
-		input.addEventListener("keypress",ev=>{
-			if (ev.key == "Enter"){
-				get(`/run?cmd=${encodeURIComponent(input.value)}`);
-				input.value = "";
-			}
-		})
 	</script>
 </body>
 </html>

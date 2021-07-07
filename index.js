@@ -4,6 +4,7 @@ const express = require("express");
 const backup = require("./backup");
 const config = require("./config.json");
 const cron = require("node-cron");
+const crypto = require("crypto");
 
 // --- Server --- //
 var mc;
@@ -157,6 +158,16 @@ const app = express();
 
 app.get("/", (req, res) => {
 	res.sendFile(`${__dirname}/gui.html`);
+});
+
+app.use((req, res, next) => {
+	if (req.baseUrl != "/" && config.password) {
+		if (!req.query.auth) return res.sendStatus(401);
+
+		var hashed = crypto.createHash("sha256").update(req.query.auth).digest("hex");
+		if (hashed != config.password) return res.sendStatus(403);
+	}
+	return next();
 });
 
 app.get("/read", (req, res) => {
