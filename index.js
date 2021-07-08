@@ -22,6 +22,7 @@ var idCounter = 0;
 function start(){
 	mc = spawn("./mc/bedrock_server.exe");
 	running = true;
+	crashed = false;
 
 	mc.stdout.on("data", (data) => {
 		stdoutBuffer += data;
@@ -96,7 +97,7 @@ function start(){
 
 	mc.on("close", (code) => {
 		running = false;
-		crashed = code != 0;
+		crashed = !manualStop;
 
 		output.unshift({
 			type:"close",
@@ -198,6 +199,8 @@ app.get("/run", (req, res) => {
 app.get("/status", (req, res) => {
 	res.json({
 		running:running,
+		stopping:manualStop,
+		crashed:crashed,
 		backingUp:backingUp
 	});
 });
