@@ -30,10 +30,14 @@
 			padding: 2px;
 		}
 
-		p#line {
+		p {
 			margin: 5px 0;
 			line-height: 1rem;
 		}
+
+		p.stdout {color: #000}
+		p.stderr {color: #c00}
+		p.stdin {color: #666}
 
 		#input {
 			grid-area: input;
@@ -79,6 +83,66 @@
 
 		#backup[msg="Backup"] {background-color: #fff}
 		#backup[msg="Saving..."]  {background-color: #0ff}
+
+		#backup-container {
+			position: absolute;
+
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			width: 100vw;
+			height: 100vh;
+
+			background-color: #fffc;
+		}
+
+		#backup-list {
+			user-select: none;
+
+			position: absolute;
+
+			font-size: 2rem;
+
+			max-height: 80%;
+
+
+			background-color: #fff;
+			outline: 0.3rem solid #000;
+
+			display: grid;
+			grid-template-rows: 1fr 3rem;
+			grid-template-columns: auto;
+		}
+
+		#backup-table {
+			overflow: auto;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+
+		.backup-item {
+			padding: 0.1rem 0.4rem;
+		}
+
+		.backup-item:hover {
+			background-color: #ccc;
+		}
+
+		#cancel {
+			background-color: #ccc;
+			cursor: pointer;
+			height: 3rem;
+			line-height: 3rem;
+			text-align: center;
+		}
+
+		#cancel:hover {
+			background-color: #f00;
+			color: #fff;
+		}
+
+		[hidden] { display: none !important; }
 	</style>
 </head>
 <body>
@@ -92,8 +156,11 @@
 		<div id="quit">Quit</div>
 	</div>
 
-	<div class="backup-list">
-
+	<div id="backup-container" hidden>
+		<div id="backup-list">
+			<div id="backup-table"></div>
+			<div id="cancel" onclick="restoreBackup()">Cancel</div>
+		</div>
 	</div>
 
 	<script>
@@ -105,6 +172,9 @@
 		const backup = document.getElementById("backup");
 		const restore = document.getElementById("restore");
 		const update = document.getElementById("update");
+		const backupContainer = document.getElementById("backup-container");
+		const backupList = document.getElementById("backup-list");
+		const backupTable = document.getElementById("backup-table");
 
 		var state;
 		function get(url,callback=()=>{}){
@@ -142,7 +212,8 @@
 			while (true) {
 				if (data.length == 0) break;
 				var line = data.pop();
-				if (line.raw) output.innerHTML += `<p id="line">${line.raw}</p>`;
+				if (line.raw) output.innerHTML += `<p id="line"
+class="${line.type}" title="${line.type}">${line.raw}</p>`;
 				lastRead = line.id;
 			}
 
@@ -165,6 +236,40 @@
 			backup.setAttribute("msg",backup.innerHTML)
 		}
 
+		function displayBackups(msg){
+			var data = JSON.parse(msg);
+
+			data.sort((a,b)=>a.time - b.time);
+
+			var content = "";
+			data.forEach(ele => {
+				var t = new Date(ele.time);
+				var date = "";
+				date += t.getHours().toString().padStart(2,"0") + ":";
+				date += t.getMinutes().toString().padStart(2,"0") + " ";
+				date += t.getMonth().toString().padStart(2,"0") + "/";
+				date += t.getDay().toString().padStart(2,"0") + "/";
+				date += t.getFullYear().toString();
+
+				content += `
+<div class="backup-item" 
+	onclick="restoreBackup('${ele.id}')"
+	title="${ele.type}">
+	${date}
+</div>`
+				console.log(ele.id)
+			});
+
+			backupContainer.hidden = false;
+			backupTable.innerHTML = content;
+		}
+
+		function restoreBackup(id){
+			backupContainer.hidden = true;
+			if (!id) return
+			get(`/restore?id=${id}`)
+		}
+
 		get("/read",msg=>{
 			render(msg);
 			get(`/status`,setStatus);
@@ -182,11 +287,15 @@
 			});
 
 			status.addEventListener("click",ev=>{
-				if (!state.running || confirm(`Are you sure you want to ${state.running?"stop":"start"} the server?`))
+				if (!state.running || confirm("Are you sure you want to stop the server?"))
 					get(state.running?"stop":"start");
 			});
 
 			backup.addEventListener("click",ev=>get("/backup"));
+			restore.addEventListener("click",ev=>get("/backup_list",displayBackups));
+			quit.addEventListener("click",ev=>{
+				if (confirm("Are you sure you want to close the server?")) get("/quit");
+			});
 		});
 
 		window.addEventListener("resize",ev=>{
@@ -194,6 +303,7 @@
 				|| output.scrollHeight == output.clientHeight;
 
 			document.body.clientHeight = window.innerHeight;
+			backupContainer.clientHeight = window.innerHeight;
 
 			if (atBottom) {
 				output.scrollHeight = output.scrollTop + output.clientHeight;

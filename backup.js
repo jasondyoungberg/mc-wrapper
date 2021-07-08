@@ -30,6 +30,7 @@ module.exports = {
 
 					fs.copy(`./mc/worlds/${config.levelName}`,ele.path + id, err => {
 						if (data) {
+							/*skip due to issues
 							data.forEach(file=>{
 								waiting ++;
 								fs.truncate(ele.path + id + file.path, file.length, err=>{
@@ -37,7 +38,7 @@ module.exports = {
 									waiting --;
 									if (waiting <= 0) resolve();
 								});
-							});
+							});*/
 						}
 						if (err) return console.error(err);
 						waiting--;
@@ -65,6 +66,54 @@ module.exports = {
 				console.log(`pruning ${ele.path}${min}`)
 				fs.remove(ele.path+min,err=>{
 					if (err) console.error(err);
+				});
+			});
+		});
+	},
+	list:()=>{
+		return new Promise((resolve,reject)=>{
+			output = [];
+			waiting = 0;
+
+			config.backups.forEach((ele,i)=>{
+				fs.readdir(ele.path,(err,files)=>{
+					if (err) return console.error(err);
+
+					files.forEach(file=>{
+						waiting++;
+						fs.stat(ele.path + file,(err,stats)=>{
+							if (err) console.error(err);
+							else output.push({
+								time:stats.birthtimeMs,
+								type:ele.trigger,
+								id:`${i}|${file}`
+							});
+							waiting --;
+
+							if (waiting == 0) resolve(output);
+						})
+					});
+				});
+			});
+		});
+	},
+	restore:id=>{
+		var id = id.split("|");
+		var src = config.backups[id[0]].path + id[1];
+		var dest = `./mc/worlds/${config.levelName}`;
+		
+		return new Promise((resolve,reject)=>{
+			fs.access(src,err=>{
+				if (err) console.trace(err);
+
+				fs.emptyDir(dest,err=>{
+					if (err) console.trace(err);
+
+					fs.copy(src,dest,err=>{
+						if (err) console.trace(err);
+
+						resolve();
+					});
 				});
 			});
 		});

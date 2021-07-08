@@ -11,21 +11,26 @@ Tells you the status of the mc server
 }
 ```
 
+---
 ### **`start`**
 Starts the mc server
 
+---
 ### **`stop`**
 Stops the mc server
 
+---
 ### **`quit`**
 Closes the server
 
+---
 ### **`read`**
 Reads from output
 #### **args**
 `lines = <int>` : how many lines to read from the output (optional)
 `from = <int>` : read all lines with ids greater than (optional)
 
+---
 #### **response**
 ```
 [
@@ -43,17 +48,31 @@ Reads from output
 	}
 ]
 ```
+---
+### **`backup`**
+Creates backup
 
-### **`run`**
-Runs command in mc server
+---
+### **`backup_list`**
+List all stored backups
+#### **response**
+```
+[
+	{
+		id: <string>, // id of the backup
+		time: <int> // time backup was created (ms)
+	}
+]
+```
+
+---
+### **`restore`**
+Restores backup
 #### **args**
-`cmd = <string>` : command to run
+`id = <string>` : id of backup to be restored
 
-### **`/backup`**
-
+---
 ### **TODO**
- - **`backup_list`**
- - **`restore?id=<string>`**
  - **`update`**
  - **`update?v=<string>`**
 

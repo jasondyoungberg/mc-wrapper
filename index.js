@@ -13,6 +13,7 @@ var backingUp = false;
 var quitting = false;
 var crashed = false;
 var manualStop = false;
+var restoring = "";
 var backupData = null;
 var output = [];
 var stdoutBuffer = "";
@@ -21,6 +22,7 @@ var idCounter = 0;
 
 function start(){
 	mc = spawn("./mc/bedrock_server.exe");
+	manualStop = false;
 	running = true;
 	crashed = false;
 
@@ -108,7 +110,14 @@ function start(){
 		backingUp = true;
 		backup.backup(crashed?"crash":"stop").finally(()=>{
 			backingUp = false;
-			backup.prune();
+			if (!restoring) backup.prune();
+			else {
+				backup.restore(restoring).catch(console.error).finally(()=>{
+					restoring = "";
+					start();
+					backup.prune();
+				});
+			}
 
 			if (quitting) process.exit()
 			if (config.autoRestart && !manualStop) start();
@@ -201,7 +210,8 @@ app.get("/status", (req, res) => {
 		running:running,
 		stopping:manualStop,
 		crashed:crashed,
-		backingUp:backingUp
+		backingUp:backingUp,
+		restoring:restoring != ""
 	});
 });
 
@@ -230,6 +240,27 @@ app.get("/backup", (req, res) => {
 		}));
 	}
 	res.sendStatus(200);
+});
+
+app.get("/backup_list", (req, res) => {
+	backup.list().then((x)=>{res.json(x)})
+});
+
+app.get("/restore", (req, res) => {
+	res.sendStatus(200);
+
+	restoring = req.query.id;
+
+	console.log(`restoring ${req.query.id}`)
+
+	if (running) {
+		manualStop = true;
+		send("stop");
+	} else {
+		backup.restore(restoring).catch(console.error).finally(()=>{
+			restoring = "";
+		})
+	}
 });
 
 app.get("/quit", (req, res) => {
