@@ -8,47 +8,105 @@
 	<style>
 		body {
 			display: grid;
-
-			grid-template-areas: "controls output" "controls input";
-			grid-template-columns: 250px 1fr;
-			grid-template-rows: 1fr 21px;
+			grid-template-rows: 1fr 2rem auto;
+			grid-template-columns: 100vw;
+			grid-template-areas: "output" "input" "controls";
 			
 			margin: 0;
-			height: calc(100vh - 20px);
-
-			padding: 10px;
+			height: 100vh;
 
 			overflow: hidden;
+
+			font-family: Arial, Helvetica, sans-serif;
 		}
 
 		#output {
+			font-family: 'Courier New', Courier, monospace;
+			font-size: 1rem;
+
 			grid-area: output;
 			overflow-y: scroll;
 			margin: 0;
-			padding-bottom: 2px;
+			padding: 2px;
+		}
+
+		p#line {
+			margin: 5px 0;
+			line-height: 1rem;
 		}
 
 		#input {
 			grid-area: input;
-			border: 2px solid black;
+			border: solid black;
+			border-width: 0.3rem 0;
 			outline: none;
+			font-size: 1rem;
 		}
 
 		#controls {
 			grid-area: controls;
+			background-color: black;
+
+			display: flex;
+			flex-wrap: wrap;
+
+			line-height: 1rem;
+			font-weight: bold;
+			font-size: 1rem;
+			cursor: pointer;
+
+			margin: 0 -0.15rem -0.3rem;
 		}
+
+		#controls > * {
+			flex: 1 0 auto;
+		
+			margin: 0 0.15rem 0.3rem;
+
+			padding: 0.5rem;
+
+			text-align: center;
+			height: 1rem;
+			display: inline-block;
+
+			background-color: #fff;
+		}
+
+		#status[msg="Running"] {background-color: #0f0}
+		#status[msg="Stopping..."] {background-color: #ff0}
+		#status[msg="Stopped"] {background-color: #f60}
+		#status[msg="Crashed"] {background-color: #f00}
+
+		#backup[msg="Backup"] {background-color: #fff}
+		#backup[msg="Saving..."]  {background-color: #0ff}
 	</style>
 </head>
 <body>
-	<pre id="output"></pre>
+	<div id="output"></div>
 	<input id="input">
-	<div id="controls"></div>
+	<div id="controls">
+		<div id="status"></div>
+		<div id="backup">Backup</div>
+		<div id="restore">Restore</div>
+		<div id="update">Update</div>
+		<div id="quit">Quit</div>
+	</div>
+
+	<div class="backup-list">
+
+	</div>
 
 	<script>
-		var auth = window.localStorage.getItem("auth");
-		var output = document.getElementById("output");
-		var input = document.getElementById("input");
+		const auth = window.localStorage.getItem("auth");
 
+		const output = document.getElementById("output");
+		const input = document.getElementById("input");
+		const status = document.getElementById("status");
+		const backup = document.getElementById("backup");
+		const restore = document.getElementById("restore");
+		const update = document.getElementById("update");
+
+		var state;
 		function get(url,callback=()=>{}){
 			var xmlHttp = new XMLHttpRequest();
 			xmlHttp.onreadystatechange = function() { 
@@ -84,21 +142,37 @@
 			while (true) {
 				if (data.length == 0) break;
 				var line = data.pop();
-				if (line.raw) output.append(`${line.raw}\n`);
+				if (line.raw) output.innerHTML += `<p id="line">${line.raw}</p>`;
 				lastRead = line.id;
 			}
 
 			if (atBottom) {
 				output.scrollHeight = output.scrollTop + output.clientHeight;
-				output.scrollTo(0,output.scrollHeight);
+				output.scrollTo(output.scrollLeft,output.scrollHeight);
 			}
 		}
 		
+		function setStatus(msg){
+			state = JSON.parse(msg);
+			if (state.crashed) status.innerHTML = "Crashed";
+			else if (state.stopping) status.innerHTML = "Stopping...";
+			else if (state.running) status.innerHTML = "Running";
+			else status.innerHTML = "Stopped";
+
+			backup.innerHTML = state.backingUp?"Saving...":"Backup";
+
+			status.setAttribute("msg",status.innerHTML);
+			backup.setAttribute("msg",backup.innerHTML)
+		}
+
 		get("/read",msg=>{
 			render(msg);
+			get(`/status`,setStatus);
+
 			setInterval(()=>{
-				get(`/read?from=${lastRead}`,render)
-			},100);
+				get(`/read?from=${lastRead}`,render);
+				get(`/status`,setStatus);
+			},250);
 
 			input.addEventListener("keypress",ev=>{
 				if (ev.key == "Enter"){
@@ -106,7 +180,26 @@
 					input.value = "";
 				}
 			});
+
+			status.addEventListener("click",ev=>{
+				if (!state.running || confirm(`Are you sure you want to ${state.running?"stop":"start"} the server?`))
+					get(state.running?"stop":"start");
+			});
+
+			backup.addEventListener("click",ev=>get("/backup"));
 		});
+
+		window.addEventListener("resize",ev=>{
+			var atBottom = 1 == output.scrollTop / (output.scrollHeight - output.clientHeight)
+				|| output.scrollHeight == output.clientHeight;
+
+			document.body.clientHeight = window.innerHeight;
+
+			if (atBottom) {
+				output.scrollHeight = output.scrollTop + output.clientHeight;
+				output.scrollTo(output.scrollLeft,output.scrollHeight);
+			}
+		})
 
 	</script>
 </body>
