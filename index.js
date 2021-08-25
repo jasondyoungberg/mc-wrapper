@@ -275,7 +275,7 @@ app.get("/download.mcworld", (req, res) => {
 				clearInterval(loop);
 				backup.download()
 					.then(()=>{
-						res.sendFile(`${__dirname}/download.zip`);
+						res.sendFile(`${__dirname}/download.mcworld`);
 					}).finally(()=>{
 						backingUp = false;
 						send("save resume");
