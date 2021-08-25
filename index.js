@@ -263,6 +263,34 @@ app.get("/restore", (req, res) => {
 	}
 });
 
+app.get("/download.mcworld", (req, res) => {
+	if (running) {
+		if (backingUp) return res.sendStatus(405);
+		backingUp = true;
+
+		send("save hold");
+
+		var loop = setInterval(()=>{
+			if (backupData) {
+				clearInterval(loop);
+				backup.download()
+					.then(()=>{
+						res.sendFile(`${__dirname}/download.zip`);
+					}).finally(()=>{
+						backingUp = false;
+						send("save resume");
+					});
+			} else {
+				send("save query");
+			}
+		},100);
+	} else {
+		backup.download().then(()=>{
+			res.sendFile(`${__dirname}/download.mcworld`)});
+	}
+
+});
+
 app.get("/quit", (req, res) => {
 	res.sendStatus(200);
 	if (running) {

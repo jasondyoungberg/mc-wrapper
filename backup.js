@@ -1,4 +1,5 @@
 const fs = require("fs-extra");
+const archiver = require("archiver")
 const config = require("./config.json");
 
 config.backups.map(ele => {
@@ -43,7 +44,7 @@ module.exports = {
 						if (err) return console.error(err);
 						waiting--;
 						if (waiting <= 0) resolve();
-					} )
+					});
 				}
 			});
 		});
@@ -116,6 +117,20 @@ module.exports = {
 					});
 				});
 			});
+		});
+	},
+	download:()=>{
+		const archive = archiver('zip', { zlib: { level: 9 }});
+		const stream = fs.createWriteStream('./download.mcworld');
+
+		return new Promise((resolve, reject) => {
+			archive
+				.directory(`./mc/worlds/${config.levelName}`, false)
+				.on('error', err => reject(err))
+				.pipe(stream);
+
+			stream.on('close',resolve);
+			archive.finalize();
 		});
 	}
 }
