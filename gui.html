@@ -183,7 +183,7 @@
 		const backupList = document.getElementById("backup-list");
 		const backupTable = document.getElementById("backup-table");
 
-		if (auth) download.href = `/download.zip?auth=${auth}`;
+		if (auth) download.href = `/download.mcworld?auth=${auth}`;
 
 		var state;
 		function get(url,callback=()=>{}){
@@ -195,7 +195,7 @@
 					auth = prompt("password?");
 					window.localStorage.setItem("auth",auth);
 
-					download.href = `/download.zip?auth=${auth}`;
+					download.href = `/download.mcworld?auth=${auth}`;
 
 					get(url,callback);
 				}
