@@ -171,6 +171,7 @@
 
 	<script>
 		const auth = window.localStorage.getItem("auth");
+		if (auth) download.href = `/download.zip?auth=${auth}`;
 
 		const output = document.getElementById("output");
 		const input = document.getElementById("input");
