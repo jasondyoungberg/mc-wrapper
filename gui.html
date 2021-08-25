@@ -171,7 +171,6 @@
 
 	<script>
 		const auth = window.localStorage.getItem("auth");
-		if (auth) download.href = `/download.zip?auth=${auth}`;
 
 		const output = document.getElementById("output");
 		const input = document.getElementById("input");
@@ -183,6 +182,8 @@
 		const backupContainer = document.getElementById("backup-container");
 		const backupList = document.getElementById("backup-list");
 		const backupTable = document.getElementById("backup-table");
+
+		if (auth) download.href = `/download.zip?auth=${auth}`;
 
 		var state;
 		function get(url,callback=()=>{}){
