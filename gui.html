@@ -256,12 +256,9 @@ class="${line.type}" title="${line.type}">${line.raw}</p>`;
 			var content = "";
 			data.forEach(ele => {
 				var t = new Date(ele.time);
-				var date = "";
-				date += t.getHours().toString().padStart(2,"0") + ":";
-				date += t.getMinutes().toString().padStart(2,"0") + " ";
-				date += t.getMonth().toString().padStart(2,"0") + "/";
-				date += t.getDay().toString().padStart(2,"0") + "/";
-				date += t.getFullYear().toString();
+				var date = t.toISOString();
+				date = date.replace('T',' ');
+				date = date.replace(/:\d{2}\.\d{3}Z/,'');
 
 				content += `
 <div class="backup-item" 
